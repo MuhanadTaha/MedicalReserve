@@ -11,16 +11,16 @@ namespace medical_reservation
 {
 
 
-    public partial class Appointments
+    public partial class PatientAppointments
     {
 
         /// <summary>
-        /// rptDoctors control.
+        /// gvCustomerAppointments control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Repeater rptDoctors;
+        protected global::System.Web.UI.WebControls.GridView gvCustomerAppointments;
     }
 }
