@@ -1,21 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Web;
 using System.Web.UI;
-using System.Web.UI.WebControls;
 
 namespace medical_reservation
 {
-    public partial class Login : System.Web.UI.Page
+    public partial class Login : Page
     {
-
         SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["MedResDBConnectionString"].ConnectionString);
+
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            // يمكنك إضافة بعض منطق هنا للتحقق إذا كان المستخدم قد سجل الدخول مسبقًا باستخدام الـ Session
+            if (Session["Email"] != null)
+            {
+                Response.Redirect("Default.aspx"); // إعادة توجيه المستخدم إذا كان قد سجل الدخول بالفعل
+            }
         }
 
         protected void Button1_Click(object sender, EventArgs e)
@@ -23,24 +24,48 @@ namespace medical_reservation
             SqlCommand cmd = new SqlCommand();
             SqlCommand objcmd = null;
 
-            con.Open();
-            string stmt = "select * from users where email = '" + txtEmail.Text + "'  and password = '" + txtPassword.Text + "' ";
-            objcmd = new SqlCommand(stmt, con);
-
-            SqlDataReader reader = objcmd.ExecuteReader();
-
-            if (reader.Read())
+            try
             {
-                Session["Email"] = txtEmail.Text;
-                Response.Redirect("Default.aspx");
+                con.Open();
+                string stmt = "SELECT id, email, password, authorized FROM users WHERE email = @Email AND password = @Password";
+                objcmd = new SqlCommand(stmt, con);
+
+                // استخدام المعاملات لمنع هجمات SQL Injection
+                objcmd.Parameters.AddWithValue("@Email", txtEmail.Text);
+                objcmd.Parameters.AddWithValue("@Password", txtPassword.Text);
+
+                SqlDataReader reader = objcmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    // تخزين بيانات المستخدم في الـ session
+                    Session["Email"] = txtEmail.Text;
+                    Session["UserID"] = reader["id"];
+                    Session["Role"] = reader["authorized"]; // هنا نقوم بتخزين الدور (مثلاً: doctor أو patient)
+
+                    // التوجيه إلى الصفحة الرئيسية بناءً على الدور
+                    if (reader["authorized"].ToString() == "doctor")
+                    {
+                        Response.Redirect("DoctorDashboard.aspx");
+                    }
+                    else
+                    {
+                        Response.Redirect("Default.aspx");
+                    }
+                }
+                else
+                {
+                    Response.Write("<script>alert('Invalid Password or Email ...');</script>");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Response.Write("<script>alert('Invalid Password or Email ...');</script>");
-
+                Response.Write("<script>alert('Error: " + ex.Message + "');</script>");
+            }
+            finally
+            {
+                con.Close();
             }
         }
-
     }
-
 }

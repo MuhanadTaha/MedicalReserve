@@ -11,30 +11,78 @@ namespace medical_reservation
         {
             if (!IsPostBack)
             {
-                LoadAppointments();
+                // التأكد من أن المستخدم مسجل الدخول وأنه دكتور
+                if (Session["Role"] != null && Session["Role"].ToString() == "doctor" && Session["Email"] != null)
+                {
+                    string userEmail = Session["Email"].ToString(); // أخذ الإيميل من السيشن
+                    int doctorID = GetDoctorIDByEmail(userEmail); // الحصول على DoctorID بناءً على الإيميل
+                    LoadAppointments(doctorID); // تحميل الحجوزات الخاصة بالدكتور
+                }
+                else
+                {
+                    // إذا لم يكن هناك Role أو إذا كان المستخدم ليس دكتور
+                    Response.Redirect("Login.aspx"); // توجيه المستخدم لتسجيل الدخول إذا لم يكن دكتوراً
+                }
             }
         }
 
-        private void LoadAppointments()
+        // دالة لاسترجاع DoctorID بناءً على الإيميل
+        private int GetDoctorIDByEmail(string email)
+        {
+            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["MedResDBConnectionString"].ConnectionString;
+            int doctorID = 0;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"
+                    SELECT d.DoctorID
+                    FROM Doctors d
+                    JOIN Users u ON d.User_ID = u.ID
+                    WHERE u.email = @Email";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Email", email);
+
+                conn.Open();
+                object result = cmd.ExecuteScalar();
+                conn.Close();
+
+                if (result != DBNull.Value && result != null)
+                {
+                    doctorID = Convert.ToInt32(result);
+                }
+            }
+
+            return doctorID;
+        }
+
+        // تحميل الحجوزات المرتبطة بالدكتور
+        private void LoadAppointments(int doctorID)
         {
             string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["MedResDBConnectionString"].ConnectionString;
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string query = "SELECT BookingID, AppointmentID, CustomerName, CustomerEmail, CustomerPhone, AppointmentDate FROM Bookings";
-                SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
+                // تحديث الاستعلام لربط بيانات الحجز مع مواعيد الأطباء
+                string query = @"
+                    SELECT b.BookingID, b.CustomerName, b.CustomerEmail, b.CustomerPhone, 
+                        a.StartTime AS AppointmentDate, a.StartTime, a.EndTime 
+                    FROM Bookings b
+                    LEFT JOIN Appointments a ON b.AppointmentID = a.AppointmentID
+                    WHERE a.DoctorID = @DoctorID"; // تحديد الدكتور باستخدام DoctorID من السيشن
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@DoctorID", doctorID);
+
+                SqlDataAdapter adapter = new SqlDataAdapter(cmd);
                 System.Data.DataTable dt = new System.Data.DataTable();
                 adapter.Fill(dt);
+
                 gvAppointments.DataSource = dt;
                 gvAppointments.DataBind();
             }
         }
 
-        //protected void gvAppointments_RowEditing(object sender, GridViewEditEventArgs e)
-        //{
-        //    gvAppointments.EditIndex = e.NewEditIndex;
-        //    LoadAppointments();
-        //}
-
+        // حذف الحجز
         protected void gvAppointments_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
             int bookingID = Convert.ToInt32(gvAppointments.DataKeys[e.RowIndex].Value);
@@ -51,67 +99,13 @@ namespace medical_reservation
                 conn.Close();
             }
 
-            LoadAppointments();  // إعادة تحميل البيانات بعد الحذف
+            // إعادة تحميل البيانات بعد الحذف
+            if (Session["Role"] != null && Session["Role"].ToString() == "doctor" && Session["Email"] != null)
+            {
+                string userEmail = Session["Email"].ToString();
+                int doctorID = GetDoctorIDByEmail(userEmail);
+                LoadAppointments(doctorID);
+            }
         }
-
-
-        //protected void gvAppointments_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
-        //{
-        //    gvAppointments.EditIndex = -1; // العودة إلى وضع العرض
-        //    LoadAppointments();
-        //}
-
-        //protected void gvAppointments_RowUpdating(object sender, GridViewUpdateEventArgs e)
-        //{
-        //    // التأكد من أن الفهرس داخل النطاق الصحيح
-        //    if (e.RowIndex >= 0 && e.RowIndex < gvAppointments.Rows.Count)
-        //    {
-        //        // الحصول على ID الحجز من DataKeys
-        //        int bookingID = Convert.ToInt32(gvAppointments.DataKeys[e.RowIndex].Value);
-
-        //        // محاولة الحصول على القيم المدخلة من الصف المعدل
-        //        TextBox txtCustomerName = (TextBox)gvAppointments.Rows[e.RowIndex].FindControl("txtCustomerName");
-        //        TextBox txtCustomerEmail = (TextBox)gvAppointments.Rows[e.RowIndex].FindControl("txtCustomerEmail");
-        //        TextBox txtCustomerPhone = (TextBox)gvAppointments.Rows[e.RowIndex].FindControl("txtCustomerPhone");
-
-        //        // التأكد من أن الـ TextBoxs ليست فارغة أو null
-        //        if (txtCustomerName != null && txtCustomerEmail != null && txtCustomerPhone != null)
-        //        {
-        //            string customerName = txtCustomerName.Text;
-        //            string customerEmail = txtCustomerEmail.Text;
-        //            string customerPhone = txtCustomerPhone.Text;
-
-        //            // الاتصال بقاعدة البيانات لتحديث الحجز
-        //            string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["MedResDBConnectionString"].ConnectionString;
-        //            using (SqlConnection conn = new SqlConnection(connStr))
-        //            {
-        //                string query = "UPDATE Bookings SET CustomerName = @CustomerName, CustomerEmail = @CustomerEmail, CustomerPhone = @CustomerPhone WHERE BookingID = @BookingID";
-        //                SqlCommand cmd = new SqlCommand(query, conn);
-        //                cmd.Parameters.AddWithValue("@BookingID", bookingID);
-        //                cmd.Parameters.AddWithValue("@CustomerName", customerName);
-        //                cmd.Parameters.AddWithValue("@CustomerEmail", customerEmail);
-        //                cmd.Parameters.AddWithValue("@CustomerPhone", customerPhone);
-
-        //                conn.Open();
-        //                cmd.ExecuteNonQuery();  // تنفيذ عملية التحديث
-        //                conn.Close();
-        //            }
-
-        //            gvAppointments.EditIndex = -1;  // إلغاء وضع التحرير
-        //            LoadAppointments();  // إعادة تحميل البيانات بعد التحديث
-        //        }
-        //        else
-        //        {
-        //            // إذا كانت هناك مشكلة في إيجاد الـ TextBox
-        //            Response.Write("One or more controls not found.");
-        //        }
-        //    }
-        //    else
-        //    {
-        //        Response.Write("Invalid RowIndex");
-        //    }
-        //}
-
-
     }
 }

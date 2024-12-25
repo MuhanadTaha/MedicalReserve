@@ -1,0 +1,74 @@
+﻿/* تحسين التنسيق العام للأطباء */
+.card {
+    border: none; /* إزالة الحدود لجعل الشكل أكثر بساطة */
+    border-radius: 15px; /* إضافة حواف دائرية */
+    overflow: hidden; /* لضمان احتواء الصورة داخل الإطار */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 2.9); /* إضافة ظل خفيف حول البطاقة */
+    transition: transform 0.3s ease-in-out; /* تأثير عند التمرير */
+}
+
+    .card:hover {
+        transform: translateY(-10px); /* رفع البطاقة عند التمرير عليها */
+    }
+
+.card-img-top {
+    //width: 100%; /* التأكد من ملاءمة الصورة داخل البطاقة */
+    height: 500px; /* تحديد ارتفاع ثابت للصورة */
+    object-fit: cover; /* تغطية الصورة للمساحة المحددة */
+}
+
+.card-body {
+    padding: 20px; /* زيادة الحشو داخل البطاقة */
+    text-align: right; /* محاذاة النصوص لليمين */
+}
+
+.card-title {
+    font-size: 1.2em; /* تكبير حجم عنوان الطبيب */
+    font-weight: bold; /* جعل العنوان أكثر وضوحًا */
+    color: #28a745; /* جعل اللون أخضر للتناسق مع التصميم */
+    margin-bottom: 10px; /* إضافة مسافة أسفل العنوان */
+}
+
+.card-text {
+    font-size: 1em; /* تحديد حجم النص */
+    color: #333; /* نص داكن لسهولة القراءة */
+    margin-bottom: 10px; /* إضافة مسافة أسفل النص */
+}
+
+/* تحسين عرض مواعيد الطبيب */
+.mb-3 {
+    margin-bottom: 20px;
+}
+
+.d-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+button {
+    background-color: #28a745; /* خلفية زر الحجز */
+    color: white; /* اللون الأبيض للنص داخل الزر */
+    padding: 8px 15px;
+    border-radius: 5px; /* جعل الزر ذو حواف دائرية */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* تأثير تغيير اللون عند التمرير */
+}
+
+    button:hover {
+        background-color: #218838; /* تغيير اللون عند التمرير */
+    }
+
+    button:focus {
+        outline: none; /* إزالة التأثير عند الضغط على الزر */
+    }
+
+/* تحسين مظهر Repeater العناصر */
+.row {
+    margin-top: 20px;
+}
+
+.col-md-4 {
+    padding: 10px; /* إضافة مسافة بين الأعمدة */
+}
