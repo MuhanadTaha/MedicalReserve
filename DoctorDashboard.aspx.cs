@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -16,21 +14,20 @@ namespace medical_reservation
         {
             if (Session["Email"] == null || Session["Role"].ToString() != "doctor")
             {
-                Response.Redirect("Login.aspx"); // إذا لم يكن الطبيب مسجلاً دخوله أو إذا لم يكن دوره "doctor"
+                Response.Redirect("Login.aspx");
             }
             else
             {
-                // جلب بيانات الطبيب من قاعدة البيانات
                 if (!IsPostBack)
                 {
                     LoadDoctorData();
+                    LoadAppointment(); // تحميل الموعد عند التحميل الأولي للصفحة
                 }
             }
         }
 
         private void LoadDoctorData()
         {
-            // استخدام Session["Email"] للحصول على الـ UserID
             string email = Session["Email"].ToString();
             string query = "SELECT d.DoctorID, d.Specialty, d.City, d.Address, d.image " +
                            "FROM Doctors d " +
@@ -44,26 +41,130 @@ namespace medical_reservation
             {
                 con.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
-
                 if (reader.Read())
                 {
-                    // إذا كانت بيانات الطبيب موجودة، عرضها في النصوص
                     txtSpecialty.Value = reader["Specialty"].ToString();
                     txtCity.Value = reader["City"].ToString();
                     txtAddress.Value = reader["Address"].ToString();
-                    // تحميل الصورة (إذا كانت موجودة)
-                    if (reader["image"] != DBNull.Value)
-                    {
-                        // يمكن عرض الصورة إذا كانت موجودة في الـ image
-                    }
                 }
                 else
                 {
-                    // إذا لم تكن بيانات الطبيب موجودة، نسمح له بإدخال البيانات الجديدة
                     txtSpecialty.Value = "";
                     txtCity.Value = "";
                     txtAddress.Value = "";
                 }
+            }
+            catch (Exception ex)
+            {
+                Response.Write("<script>alert('Error: " + ex.Message + "');</script>");
+            }
+            finally
+            {
+                con.Close();
+            }
+        }
+
+        private void LoadAppointment()
+        {
+            string email = Session["Email"].ToString();
+            string query = "SELECT a.StartTime, a.EndTime, a.Available " +
+                           "FROM Appointments a " +
+                           "JOIN Doctors d ON d.DoctorID = a.DoctorID " +
+                           "JOIN Users u ON u.ID = d.user_id " +
+                           "WHERE u.email = @Email";
+
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@Email", email);
+
+            try
+            {
+                con.Open();
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                // إذا تم العثور على موعد
+                if (dt.Rows.Count > 0)
+                {
+                    DataRow row = dt.Rows[0];
+                    txtStartTime.Text = row["StartTime"].ToString();
+                    txtEndTime.Text = row["EndTime"].ToString();
+                    chkAvailable.Checked = Convert.ToBoolean(row["Available"]);
+                }
+            }
+            catch (Exception ex)
+            {
+                Response.Write("<script>alert('Error: " + ex.Message + "');</script>");
+            }
+            finally
+            {
+                con.Close();
+            }
+        }
+
+        protected void btnAddAppointment_Click(object sender, EventArgs e)
+        {
+            // التأكد من تعبئة جميع الحقول
+            if (string.IsNullOrWhiteSpace(txtStartTime.Text) ||
+                string.IsNullOrWhiteSpace(txtEndTime.Text))
+            {
+                Response.Write("<script>alert('يرجى ملء جميع الحقول!');</script>");
+                return;
+            }
+
+            string email = Session["Email"].ToString();
+            DateTime startTime = DateTime.Parse(txtStartTime.Text);
+            DateTime endTime = DateTime.Parse(txtEndTime.Text);
+            bool isAvailable = chkAvailable.Checked;
+
+            // الحصول على DoctorID بناءً على الـ Email
+            string query = "SELECT DoctorID FROM Doctors WHERE user_id = (SELECT ID FROM Users WHERE email = @Email)";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@Email", email);
+
+            try
+            {
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                int doctorID = Convert.ToInt32(result);
+
+                // التحقق مما إذا كان الموعد موجودًا مسبقًا
+                string checkAppointmentQuery = "SELECT COUNT(*) FROM Appointments WHERE DoctorID = @DoctorID";
+                SqlCommand checkCmd = new SqlCommand(checkAppointmentQuery, con);
+                checkCmd.Parameters.AddWithValue("@DoctorID", doctorID);
+
+                int appointmentCount = (int)checkCmd.ExecuteScalar();
+
+                if (appointmentCount > 0)
+                {
+                    // إذا كان الموعد موجودًا مسبقًا، نقوم بتعديل الموعد
+                    string updateQuery = "UPDATE Appointments SET StartTime = @StartTime, EndTime = @EndTime, Available = @Available WHERE DoctorID = @DoctorID";
+                    SqlCommand updateCmd = new SqlCommand(updateQuery, con);
+                    updateCmd.Parameters.AddWithValue("@StartTime", startTime);
+                    updateCmd.Parameters.AddWithValue("@EndTime", endTime);
+                    updateCmd.Parameters.AddWithValue("@Available", isAvailable);
+                    updateCmd.Parameters.AddWithValue("@DoctorID", doctorID);
+
+                    updateCmd.ExecuteNonQuery();
+                    Response.Write("<script>alert('تم تعديل الموعد بنجاح!');</script>");
+                }
+                else
+                {
+                    // إذا لم يكن الموعد موجودًا، نقوم بإضافة موعد جديد
+                    string insertQuery = "INSERT INTO Appointments (DoctorID, StartTime, EndTime, Available) " +
+                                         "VALUES (@DoctorID, @StartTime, @EndTime, @Available)";
+                    SqlCommand insertCmd = new SqlCommand(insertQuery, con);
+                    insertCmd.Parameters.AddWithValue("@DoctorID", doctorID);
+                    insertCmd.Parameters.AddWithValue("@StartTime", startTime);
+                    insertCmd.Parameters.AddWithValue("@EndTime", endTime);
+                    insertCmd.Parameters.AddWithValue("@Available", isAvailable);
+
+                    insertCmd.ExecuteNonQuery();
+                    Response.Write("<script>alert('تم إضافة الموعد بنجاح!');</script>");
+                }
+
+                // إعادة تحميل المواعيد بعد إضافة أو تعديل الموعد
+                LoadAppointment();
             }
             catch (Exception ex)
             {
@@ -88,14 +189,14 @@ namespace medical_reservation
 
             string email = Session["Email"].ToString();
 
-            // نبدأ بالتحقق إذا كانت بيانات الطبيب موجودة في الجدول
+            // التحقق من وجود بيانات الطبيب في الجدول
             string checkQuery = "SELECT DoctorID FROM Doctors WHERE user_id = (SELECT ID FROM Users WHERE email = @Email)";
             SqlCommand checkCmd = new SqlCommand(checkQuery, con);
             checkCmd.Parameters.AddWithValue("@Email", email);
 
             try
             {
-                con.Open(); // فتح الاتصال مرة واحدة
+                con.Open();
 
                 object result = checkCmd.ExecuteScalar();
 
@@ -173,7 +274,5 @@ namespace medical_reservation
                 con.Close(); // إغلاق الاتصال
             }
         }
-
-
     }
 }

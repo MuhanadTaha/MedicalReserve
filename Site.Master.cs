@@ -62,24 +62,30 @@ namespace medical_reservation
 
         protected void Authorization()
         {
+           
+
             string str = "select authorized from users where Email= '" + Session["Email"] + "' ";
             SqlCommand cmd = new SqlCommand(str, con);
             con.Open();
             string Result = Convert.ToString(cmd.ExecuteScalar());
 
-            if (Result == "admin")
+            if (Result != "admin")
             {
-                //ddlAdmin.Visible = true;
-
-               // btnProduct.Visible = true;
-               // btnCategory.Visible = true;
+                
+                btnDoctors.Visible = false;
             }
-            else
+            else if (Result != "doctor")
             {
-
-                //btnProduct.Visible = false;
-                //btnCategory.Visible = false;
+                btnAdminAppointment.Visible = false;
+                btnPatitionAppointment.Visible = false;
+                btnDashboard.Visible = false;
+          
             }
+            else if (Result != "customer")
+            {
+                btnPatitionAppointment.Visible=false;
+            }
+            
             con.Close();
         }
     }

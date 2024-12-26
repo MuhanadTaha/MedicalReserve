@@ -103,7 +103,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="About.aspx" />
-    <Content Include="AddDoctor.aspx" />
     <Content Include="AdminAppointments.aspx" />
     <Content Include="Confirmation.aspx" />
     <Content Include="Contact.aspx" />
@@ -197,13 +196,6 @@
     <Content Include="Site.Mobile.Master" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddDoctor.aspx.cs">
-      <DependentUpon>AddDoctor.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="AddDoctor.aspx.designer.cs">
-      <DependentUpon>AddDoctor.aspx</DependentUpon>
-    </Compile>
     <Compile Include="AdminAppointments.aspx.cs">
       <DependentUpon>AdminAppointments.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

@@ -9,15 +9,22 @@ namespace medical_reservation
     {
         protected void Page_Load(object sender, EventArgs e)
         {
+            // التحقق إذا كان المستخدم مسؤول (admin)
             if (!IsPostBack)
             {
                 if (Session["Role"] != null && Session["Role"].ToString() == "admin")
                 {
-                    LoadDoctors();
+                    LoadDoctors();  // تحميل الأطباء فقط إذا كان المستخدم مسؤول
+                }
+                else
+                {
+                    // إعادة التوجيه إلى صفحة الخطأ إذا لم يكن المستخدم مسؤول
+                    Response.Redirect("UnauthorizedAccess.aspx");
                 }
             }
         }
 
+        // دالة تحميل الأطباء من قاعدة البيانات
         private void LoadDoctors()
         {
             string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["MedResDBConnectionString"].ConnectionString;
@@ -31,33 +38,35 @@ namespace medical_reservation
 
                 SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
                 System.Data.DataTable dt = new System.Data.DataTable();
-                adapter.Fill(dt);
-                gvDoctors.DataSource = dt;
-                gvDoctors.DataBind();
+                adapter.Fill(dt);  // ملء DataTable بالبيانات
+
+                gvDoctors.DataSource = dt;  // تعيين البيانات لمصدر البيانات في GridView
+                gvDoctors.DataBind();  // ربط البيانات مع GridView
             }
         }
 
+        // دالة تنفيذ عملية الحذف عندما يقوم المستخدم بحذف طبيب
         protected void gvDoctors_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
             int doctorID = Convert.ToInt32(gvDoctors.DataKeys[e.RowIndex].Value);
 
-            // تحقق من الدور قبل السماح بالحذف
+            // تحقق من دور المستخدم قبل السماح بالحذف
             if (Session["Role"] != null && Session["Role"].ToString() == "admin")
             {
                 string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["MedResDBConnectionString"].ConnectionString;
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
-                    // حذف جميع الحجوزات المرتبطة بالمواعيد قبل حذف الموعد نفسه
+                    // استعلام لحذف جميع الحجوزات المرتبطة بالمواعيد قبل حذف الموعد نفسه
                     string deleteBookingsQuery = "DELETE FROM Bookings WHERE AppointmentID IN (SELECT AppointmentID FROM Appointments WHERE DoctorID = @DoctorID)";
                     SqlCommand deleteBookingsCmd = new SqlCommand(deleteBookingsQuery, conn);
                     deleteBookingsCmd.Parameters.AddWithValue("@DoctorID", doctorID);
 
-                    // حذف جميع المواعيد المرتبطة بالطبيب
+                    // استعلام لحذف جميع المواعيد المرتبطة بالطبيب
                     string deleteAppointmentsQuery = "DELETE FROM Appointments WHERE DoctorID = @DoctorID";
                     SqlCommand deleteAppointmentsCmd = new SqlCommand(deleteAppointmentsQuery, conn);
                     deleteAppointmentsCmd.Parameters.AddWithValue("@DoctorID", doctorID);
 
-                    // حذف الطبيب من جدول Doctors
+                    // استعلام لحذف الطبيب من جدول Doctors
                     string deleteDoctorQuery = "DELETE FROM Doctors WHERE DoctorID = @DoctorID";
                     SqlCommand deleteDoctorCmd = new SqlCommand(deleteDoctorQuery, conn);
                     deleteDoctorCmd.Parameters.AddWithValue("@DoctorID", doctorID);
@@ -81,12 +90,9 @@ namespace medical_reservation
             }
             else
             {
-                // يمكن إضافة رسالة خطأ أو توجيه إلى صفحة أخرى في حال لم يكن المستخدم أدمن.
+                // إذا لم يكن المستخدم مسؤول، إعادة التوجيه إلى صفحة الخطأ
                 Response.Redirect("UnauthorizedAccess.aspx");
             }
         }
-
-
-
     }
 }
