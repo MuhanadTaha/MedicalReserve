@@ -24,6 +24,15 @@ namespace medical_reservation
         protected global::System.Web.UI.HtmlControls.HtmlAnchor btnDoctors;
 
         /// <summary>
+        /// btnAddAdmin control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlAnchor btnAddAdmin;
+
+        /// <summary>
         /// btnAdminAppointment control.
         /// </summary>
         /// <remarks>

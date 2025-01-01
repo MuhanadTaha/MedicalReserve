@@ -10,6 +10,15 @@ namespace medical_reservation
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!IsPostBack)
+            {
+                if (Session["Role"] == null || Session["Role"].ToString() != "admin")
+                {
+                    rbAdmin.Visible = false;
+                }
+            }
+             
+
         }
 
         protected void btnSubmit_Click(object sender, EventArgs e)

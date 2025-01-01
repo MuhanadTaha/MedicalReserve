@@ -51,6 +51,7 @@
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/About">عنا</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Contact">للتواصل</a></li>
                         <li class="nav-item"><a class="nav-link" id="btnDoctors" runat="server" href="~/DoctorsList"> الأطباء</a></li>
+                         <li class="nav-item"><a class="nav-link" id=btnAddAdmin runat="server" href="~/Register">إضافة مسؤول</a></li>
                         <li class="nav-item"><a class="nav-link" id="btnAdminAppointment" runat="server" href="~/AdminAppointments">المواعيد</a></li>
                         <li class="nav-item"><a class="nav-link" id="btnPatitionAppointment" runat="server" href="~/PatientAppointments">حجوزاتي</a></li>
                         <li class="nav-item"><a class="nav-link" id=btnDashboard runat="server" href="~/DoctorDashboard">بياناتي</a></li>

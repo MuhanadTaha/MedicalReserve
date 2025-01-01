@@ -73,6 +73,7 @@ namespace medical_reservation
             {
                 
                 btnDoctors.Visible = false;
+                btnAddAdmin.Visible = false;
             }
             else if (Result != "doctor")
             {
