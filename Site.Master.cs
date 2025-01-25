@@ -75,17 +75,19 @@ namespace medical_reservation
                 btnDoctors.Visible = false;
                 btnAddAdmin.Visible = false;
             }
-            else if (Result != "doctor")
+            if (Result != "doctor")
             {
                 btnAdminAppointment.Visible = false;
-                btnPatitionAppointment.Visible = false;
+                //btnPatitionAppointment.Visible = false;
                 btnDashboard.Visible = false;
           
             }
-            else if (Result != "customer")
+            
+            if (Result != "customer")
             {
                 btnPatitionAppointment.Visible=false;
             }
+           
             
             con.Close();
         }

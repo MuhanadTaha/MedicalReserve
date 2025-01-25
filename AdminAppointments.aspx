@@ -10,6 +10,7 @@
             <Columns>
                 <asp:BoundField DataField="BookingID" HeaderText="رقم الحجز" SortExpression="BookingID" />
                 <asp:BoundField DataField="AppointmentDate" HeaderText="تاريخ الموعد" SortExpression="AppointmentDate" />
+                <asp:BoundField DataField="BookingDate" HeaderText="وقت الحجز" SortExpression="BookingDate" />
                 <asp:BoundField DataField="CustomerName" HeaderText="اسم المريض" SortExpression="CustomerName" />
                 <asp:BoundField DataField="CustomerEmail" HeaderText="ايميل المريض" SortExpression="CustomerEmail" />
                 <asp:BoundField DataField="CustomerPhone" HeaderText="هاتف لمريض" SortExpression="CustomerPhone" />

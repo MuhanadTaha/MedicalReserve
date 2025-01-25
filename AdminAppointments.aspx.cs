@@ -64,11 +64,13 @@ namespace medical_reservation
             {
                 // تحديث الاستعلام لربط بيانات الحجز مع مواعيد الأطباء
                 string query = @"
-                    SELECT b.BookingID, b.CustomerName, b.CustomerEmail, b.CustomerPhone, 
-                        a.StartTime AS AppointmentDate, a.StartTime, a.EndTime 
+                    SELECT b.BookingID, b.CustomerName, b.CustomerEmail, b.CustomerPhone, b.BookingDate,
+                       CONVERT(VARCHAR(10), a.StartTime, 111) AS AppointmentDate, a.StartTime, a.EndTime 
                     FROM Bookings b
                     LEFT JOIN Appointments a ON b.AppointmentID = a.AppointmentID
-                    WHERE a.DoctorID = @DoctorID"; // تحديد الدكتور باستخدام DoctorID من السيشن
+                    WHERE a.DoctorID = @DoctorID
+                    ORDER BY b.BookingDate ASC
+                    "; // تحديد الدكتور باستخدام DoctorID من السيشن
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@DoctorID", doctorID);
